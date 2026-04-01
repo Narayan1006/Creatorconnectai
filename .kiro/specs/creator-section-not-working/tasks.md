@@ -1,0 +1,156 @@
+# Implementation Plan
+
+- [x] 1. Write bug condition exploration test
+  - **Property 1: Bug Condition** - Creator Dashboard Renders and TypeScript Compiles
+  - **CRITICAL**: This test MUST FAIL on unfixed code - failure confirms the bug exists
+  - **DO NOT attempt to fix the test or the code when it fails**
+  - **NOTE**: This test encodes the expected behavior - it will validate the fix when it passes after implementation
+  - **GOAL**: Surface counterexamples that demonstrate the bugs exist
+  - **Scoped PBT Approach**: For deterministic bugs, scope the property to the concrete failing cases to ensure reproducibility
+  - Test implementation details from Bug Condition in design:
+    - Test that authenticated creator navigating to `/creator` sees functional dashboard UI (not blank page)
+    - Test that TypeScript compilation succeeds with `verbatimModuleSyntax` enabled
+    - Test that CreatorDashboard component renders deal cards fetched from API
+    - Test that deal action buttons (accept/reject/counter) are present in UI
+  - The test assertions should match the Expected Behavior Properties from design:
+    - Dashboard renders with profile information
+    - Deals are fetched from `GET /api/deals` endpoint
+    - Deal cards display business info, amount, deliverables, deadline
+    - Action buttons call appropriate API endpoints
+    - TypeScript compiles without import errors
+  - Run test on UNFIXED code
+  - **EXPECTED OUTCOME**: Test FAILS (this is correct - it proves the bugs exist)
+  - Document counterexamples found to understand root cause:
+    - CreatorDashboard.tsx is empty (renders nothing)
+    - AuthContext.tsx has incorrect ReactNode import
+    - No API calls are made to fetch deals
+    - No UI elements are rendered
+  - Mark task complete when test is written, run, and failure is documented
+  - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
+
+- [x] 2. Write preservation property tests (BEFORE implementing fix)
+  - **Property 2: Preservation** - Business Dashboard and Auth Context Unchanged
+  - **IMPORTANT**: Follow observation-first methodology
+  - Observe behavior on UNFIXED code for non-buggy inputs:
+    - Business user navigating to `/business` sees BusinessDashboard correctly
+    - All components using AuthContext continue to work
+    - Backend API endpoints return correct responses
+    - Authentication flow and routing work correctly
+  - Write property-based tests capturing observed behavior patterns from Preservation Requirements:
+    - For all business users, BusinessDashboard renders with same functionality
+    - For all components using useAuth hook, authentication state is provided correctly
+    - For all API calls to `/api/deals` and `/api/creators`, responses are unchanged
+    - For all user roles, routing directs to correct dashboard
+  - Property-based testing generates many test cases for stronger guarantees
+  - Run tests on UNFIXED code
+  - **EXPECTED OUTCOME**: Tests PASS (this confirms baseline behavior to preserve)
+  - Mark task complete when tests are written, run, and passing on unfixed code
+  - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
+
+- [x] 3. Fix for Creator Dashboard and TypeScript Import
+
+  - [x] 3.1 Fix TypeScript import in AuthContext
+    - Change `import { createContext, useContext, useState, ReactNode }` to `import { createContext, useContext, useState, type ReactNode }`
+    - This satisfies the `verbatimModuleSyntax` compiler requirement
+    - ReactNode is only used as a type annotation, not a runtime value
+    - _Bug_Condition: isBugCondition(input) where input.scenario == "compilation" AND input.compilerConfig.verbatimModuleSyntax == true_
+    - _Expected_Behavior: TypeScript compilation succeeds with type-only import (Property 2 from design)_
+    - _Preservation: AuthContext functionality for all existing components remains unchanged (Requirements 3.5, 3.6)_
+    - _Requirements: 2.2, 3.5, 3.6_
+
+  - [x] 3.2 Implement CreatorDashboard component structure
+    - Import dependencies: React hooks (useState, useEffect), axios, Layout, useAuth
+    - Define TypeScript interfaces matching backend API response types:
+      - Deal interface (id, business_id, creator_id, amount, deliverables, deadline, status, ad_idea, content_url)
+      - CreatorProfile interface (id, name, niche, followers, engagement_rate)
+    - Implement state management:
+      - deals state for storing fetched deals
+      - loading state for API call status
+      - error state for error messages
+      - selectedDeal state for modal interactions
+      - contentUrl state for content submission form
+      - profile state for creator profile data
+    - _Bug_Condition: isBugCondition(input) where input.scenario == "navigation" AND input.user.role == "creator" AND currentRoute == "/creator"_
+    - _Expected_Behavior: Dashboard renders functional UI with profile and deals (Property 1 from design)_
+    - _Preservation: BusinessDashboard and authentication flow remain unchanged (Requirements 3.1, 3.2)_
+    - _Requirements: 2.1, 2.3, 2.8, 3.1, 3.2_
+
+  - [x] 3.3 Implement API integration functions
+    - fetchDeals() function calling `GET /api/deals` with auth token
+    - fetchProfile() function calling `GET /api/creators/me` with auth token
+    - handleAccept(dealId) function calling `PUT /api/deals/{id}/accept`
+    - handleReject(dealId) function calling `PUT /api/deals/{id}/reject`
+    - handleCounter(dealId) function calling `PUT /api/deals/{id}/counter`
+    - handleSubmitContent(dealId, contentUrl) function calling `POST /api/deals/{id}/submit`
+    - Error handling for network errors, 401, 404, 409 status codes
+    - _Bug_Condition: isBugCondition(input) where creator attempts to view or manage deals_
+    - _Expected_Behavior: Deal actions function correctly (Property 3 from design)_
+    - _Preservation: Backend API endpoints continue to work without modification (Requirement 3.3)_
+    - _Requirements: 2.3, 2.5, 2.6, 2.7, 2.9, 3.3_
+
+  - [x] 3.4 Implement UI components following design system
+    - Header Section: Display "Creator Dashboard" title with profile info
+    - Profile Section: Show creator name, niche, followers, engagement rate
+    - Deals List: Grid of deal cards showing pending, accepted, and submitted deals
+    - Deal Card: Display business info, offer amount, deliverables, deadline, status
+    - Action Buttons: Accept/Reject/Counter buttons for pending deals
+    - Ad Idea Display: Show AI-generated ad idea for accepted deals
+    - Content Submission Form: Input field and submit button for accepted deals
+    - Empty State: Message when no deals exist
+    - Loading State: Spinner while fetching data
+    - Error State: Error message display
+    - Match BusinessDashboard design patterns:
+      - Use same color scheme: #f9f9f9 background, #e8e8e8 borders, black text
+      - Use same typography: font-headline for titles, uppercase labels with tracking
+      - Use same spacing: px-8 py-8 for main content, consistent gaps
+      - Use same card styling: white background, border, rounded-xl, shadow
+      - Use Material Symbols icons for consistency
+    - _Bug_Condition: isBugCondition(input) where creator views dashboard_
+    - _Expected_Behavior: Functional dashboard displays profile and deals (Property 1 from design)_
+    - _Preservation: Design system consistency with BusinessDashboard (Requirement 3.1)_
+    - _Requirements: 2.1, 2.3, 2.4, 2.8, 3.1_
+
+  - [x] 3.5 Implement useEffect hook for data fetching
+    - Call fetchProfile() on component mount to get creator profile
+    - Call fetchDeals() on component mount to load all deals
+    - Handle 404 for profile (show profile linking UI if needed)
+    - Re-fetch after any deal action to update UI
+    - _Bug_Condition: isBugCondition(input) where creator navigates to dashboard_
+    - _Expected_Behavior: Dashboard fetches and displays data on mount (Property 1 from design)_
+    - _Preservation: No changes to backend API or other components_
+    - _Requirements: 2.1, 2.3, 3.3_
+
+  - [x] 3.6 Verify bug condition exploration test now passes
+    - **Property 1: Expected Behavior** - Creator Dashboard Renders and TypeScript Compiles
+    - **IMPORTANT**: Re-run the SAME test from task 1 - do NOT write a new test
+    - The test from task 1 encodes the expected behavior
+    - When this test passes, it confirms the expected behavior is satisfied
+    - Run bug condition exploration test from step 1
+    - **EXPECTED OUTCOME**: Test PASSES (confirms bugs are fixed)
+    - Verify:
+      - CreatorDashboard renders functional UI with profile and deals
+      - TypeScript compiles successfully with type-only import
+      - Deal cards display correctly with action buttons
+      - API calls are made to fetch deals and profile
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9_
+
+  - [x] 3.7 Verify preservation tests still pass
+    - **Property 2: Preservation** - Business Dashboard and Auth Context Unchanged
+    - **IMPORTANT**: Re-run the SAME tests from task 2 - do NOT write new tests
+    - Run preservation property tests from step 2
+    - **EXPECTED OUTCOME**: Tests PASS (confirms no regressions)
+    - Verify:
+      - BusinessDashboard continues to work for business users
+      - AuthContext provides authentication state to all components
+      - Backend API endpoints return correct responses
+      - Routing directs users to correct dashboard based on role
+    - Confirm all tests still pass after fix (no regressions)
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
+
+- [x] 4. Checkpoint - Ensure all tests pass
+  - Run all tests (bug condition exploration + preservation)
+  - Verify CreatorDashboard renders correctly for creators
+  - Verify BusinessDashboard still works for business users
+  - Verify TypeScript compilation succeeds
+  - Verify all deal actions work correctly
+  - Ask the user if questions arise
