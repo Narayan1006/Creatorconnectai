@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: creatorconnectai-backend
+    runtime: python
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app.main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: JWT_SECRET
+        generateValue: true
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_CREDENTIALS_PATH
+        value: firebase-service-account.json
+      - key: GROQ_API_KEY
+        sync: false
+      - key: EMBEDDING_MODEL
+        value: local
+      - key: EMBEDDING_DIM
+        value: 384
+      - key: FAISS_INDEX_PATH
+        value: /opt/render/project/src/faiss_index
+    disk:
+      name: faiss-storage
+      mountPath: /opt/render/project/src
+      sizeGB: 1
