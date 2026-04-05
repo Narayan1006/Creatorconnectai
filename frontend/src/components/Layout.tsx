@@ -3,11 +3,7 @@ import { useAuth } from '../context/AuthContext'
 
 const NAV_ITEMS = [
   { icon: 'dashboard', label: 'Overview' },
-  { icon: 'search', label: 'Discovery' },
   { icon: 'handshake', label: 'Deals' },
-  { icon: 'verified', label: 'Verification' },
-  { icon: 'payments', label: 'Payments' },
-  { icon: 'settings', label: 'Settings' },
 ]
 
 export default function Layout({ children }: { children: ReactNode }) {
@@ -52,15 +48,10 @@ export default function Layout({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 bg-white border-b border-[#e8e8e8] flex items-center justify-between px-8 shrink-0">
-          <div className="flex items-center gap-3 bg-[#f3f3f4] rounded-lg px-3 py-2 w-64">
-            <span className="material-symbols-outlined text-[#777777]" style={{ fontSize: 16 }}>search</span>
-            <input type="text" placeholder="Search creators, campaigns..."
-              className="bg-transparent text-sm text-[#1a1c1c] placeholder:text-[#777777] outline-none w-full" />
+        <header className="h-14 bg-white border-b border-[#e8e8e8] flex items-center justify-end px-8 shrink-0">
+          <div className="text-sm text-[#777777]">
+            {user?.role === 'business' ? 'Business' : 'Creator'} Dashboard
           </div>
-          <button className="p-2 rounded-lg hover:bg-[#f3f3f4] transition-colors text-[#474747]">
-            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>notifications</span>
-          </button>
         </header>
         <main className="flex-1 overflow-auto">{children}</main>
       </div>

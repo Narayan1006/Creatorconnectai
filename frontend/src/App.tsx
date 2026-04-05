@@ -1,9 +1,5 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import TopNav from './components/TopNav'
-import Sidebar from './components/Sidebar'
-import Footer from './components/Footer'
-import Dashboard from './pages/Dashboard'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
 const LandingPage = lazy(() => import('./pages/LandingPage'))
@@ -16,19 +12,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token } = useAuth()
   if (!token) return <Navigate to="/login" replace />
   return <>{children}</>
-}
-
-function DashboardShell() {
-  return (
-    <div className="min-h-screen flex flex-col bg-surface font-sans">
-      <TopNav />
-      <div className="flex flex-1 mx-auto w-full max-w-[1440px]">
-        <Sidebar />
-        <Dashboard />
-      </div>
-      <Footer />
-    </div>
-  )
 }
 
 const PageLoader = () => (
@@ -62,7 +45,6 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/dashboard" element={<DashboardShell />} />
           </Routes>
         </Suspense>
       </BrowserRouter>

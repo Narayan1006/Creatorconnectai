@@ -10,17 +10,6 @@ export default function LandingPage() {
       <nav className="fixed top-0 w-full z-50 bg-neutral-50/80 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.04)]">
         <div className="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
           <div className="text-xl font-bold tracking-tighter text-black font-headline">CreatorConnectAI</div>
-          <div className="hidden md:flex items-center gap-8">
-            {['Features','Marketplace','For Businesses','For Creators','Pricing'].map((item, i) => (
-              <a key={item}
-                className={`font-headline tracking-tight text-sm font-medium transition-colors duration-300 ${
-                  i === 0
-                    ? 'text-black border-b border-black pb-1'
-                    : 'text-neutral-500 hover:text-black'
-                }`}
-                href="#">{item}</a>
-            ))}
-          </div>
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate('/login')}
